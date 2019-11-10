@@ -6,8 +6,11 @@ import numpy as np
 from PIL import Image
 from models.SVM import svc_model
 from sklearn.metrics import accuracy_score
+from skimage.transform import rotate
+import random
 
-BASE_PATH = "dataset/chars74k-lite/"
+
+CHAR_PATH = "dataset/chars74k-lite/"
 LETTERS = [i for i in string.ascii_lowercase]
 
 
@@ -21,12 +24,13 @@ def pre_processing(path):
 
 
 def split_data(images, labels):
-    X_train, X_test, y_train, y_test = train_test_split(images, labels, test_size=0.20, random_state=23)
+    X_train, X_test, y_train, y_test = train_test_split(
+        images, labels, test_size=0.20, random_state=23)
     return X_train, X_test, y_train, y_test
 
 
 def load_images():
-    total_files = len(glob(BASE_PATH + "**/*.jpg"))
+    total_files = len(glob(CHAR_PATH + "**/*.jpg"))
     images = np.zeros([total_files, 20, 20])
     labels = np.zeros(total_files)
 
@@ -34,7 +38,7 @@ def load_images():
 
     for i in range(len(LETTERS)):
         print(LETTERS[i])
-        paths = glob(BASE_PATH + LETTERS[i] + "/*.jpg")
+        paths = glob(CHAR_PATH + LETTERS[i] + "/*.jpg")
         for path in paths:
 
             image_pp = pre_processing(path)
@@ -47,16 +51,18 @@ def load_images():
 
 
 def rotate_pictures(images, labels):
-    extended_images = np.zeros([4*images.shape[0], images.shape[1], images.shape[2]])
+    extended_images = np.zeros(
+        [4*images.shape[0], images.shape[1], images.shape[2]])
     extended_images[:images.shape[0]] = images
 
     extended_labels = np.zeros([4*labels.shape[0]])
     extended_labels[:labels.shape[0]] = labels
 
     for i in range(3):
+        degree = random.randint(-25, 25)
         extended_labels[labels.shape[0]*(i+1):labels.shape[0]*(i+2)] = labels
         for j in range(len(images)):
-            extended_images[images.shape[0]*(1+i) + j] = np.rot90(images[j])
+            extended_images[images.shape[0]*(1+i) + j] = rotate(images[j], degree)
 
     return extended_images, extended_labels
 
@@ -64,7 +70,7 @@ def rotate_pictures(images, labels):
 def main():
     images, labels = load_images()
     im_train, im_test, label_train, label_test = split_data(images, labels)
-    # im_train, label_train = rotate_pictures(im_train, label_train)
+    im_train, label_train = rotate_pictures(im_train, label_train)
 
     predictions = svc_model(im_train, label_train, im_test)
     #accuracy = build_dense_model(im_train, labels_train, im_test, label_test)
@@ -72,7 +78,7 @@ def main():
     print("Accuracy: ", accuracy_score(label_test, predictions))
 
 
-main()
+# main()
 
 
 # test_image = np.array([im_test[1]])
@@ -87,7 +93,6 @@ main()
 # plt.show()
 #
 # print(LETTERS[int(label_test[1])])
-
 
 
 #
