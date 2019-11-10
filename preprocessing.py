@@ -1,15 +1,11 @@
-from skimage import feature
-from scipy import ndimage, misc
 from glob import glob
-import matplotlib.pyplot as plt
-from sklearn.svm import SVC
-from sklearn.preprocessing import StandardScaler
-from sklearn.pipeline import Pipeline
-from sklearn.model_selection import GridSearchCV, train_test_split
-
+from sklearn.model_selection import train_test_split
+from feature_extraction import otsu_filter
 import string
 import numpy as np
 from PIL import Image
+from models.SVM import svc_model
+from sklearn.metrics import accuracy_score
 
 BASE_PATH = "dataset/chars74k-lite/"
 LETTERS = [i for i in string.ascii_lowercase]
@@ -18,19 +14,20 @@ LETTERS = [i for i in string.ascii_lowercase]
 def pre_processing(path):
     image = Image.open(path)
     data = np.asarray(image)/255
-    data = data.reshape(1, 400)
+    data = otsu_filter(data)
+
+    # data = data.reshape(1, 400)
     return data
 
 
 def split_data(images, labels):
-    X_train, X_test, y_train, y_test = train_test_split(
-        images, labels, test_size=0.20, random_state=23)
+    X_train, X_test, y_train, y_test = train_test_split(images, labels, test_size=0.20, random_state=23)
     return X_train, X_test, y_train, y_test
 
 
 def load_images():
-    total_files = len(glob("dataset/chars74k-lite/**/*.jpg"))
-    images = np.zeros([total_files, 400])
+    total_files = len(glob(BASE_PATH + "**/*.jpg"))
+    images = np.zeros([total_files, 20, 20])
     labels = np.zeros(total_files)
 
     n = 0
@@ -49,64 +46,47 @@ def load_images():
     return images, labels
 
 
-def svc_model(images, labels, test_image):
-    # # Create a pipeline that finds the optimal kernel function for the SVC
-    # scaler_and_classifier = [
-    #     ('scaler', StandardScaler()), ('SVM', SVC(kernel='poly'))]
-    # pipeline = Pipeline(scaler_and_classifier)
-    #
-    # # Parameters to evaluate
-    # parameters = {'SVM__C': [0.001, 0.1, 100, 10e5],
-    #               'SVM__gamma': [10, 1, 0.1, 0.01]}
-    #
-    # # Perform extensive search on all parameters to find the optimal parameter combination
-    # svc = GridSearchCV(pipeline, param_grid=parameters, cv=5)
+def rotate_pictures(images, labels):
+    extended_images = np.zeros([4*images.shape[0], images.shape[1], images.shape[2]])
+    extended_images[:images.shape[0]] = images
 
-    print("Predicting.....")
-    svc = SVC(gamma="scale", kernel='rbf')
-    svc.fit(images, labels)
-    prediction = svc.predict(test_image)
-    print("Done predicting")
+    extended_labels = np.zeros([4*labels.shape[0]])
+    extended_labels[:labels.shape[0]] = labels
 
-    return prediction
+    for i in range(3):
+        extended_labels[labels.shape[0]*(i+1):labels.shape[0]*(i+2)] = labels
+        for j in range(len(images)):
+            extended_images[images.shape[0]*(1+i) + j] = np.rot90(images[j])
 
-
-def find_accuracy(predictions, labels):
-    counter = 0
-    for i in range(len(predictions)):
-        if predictions[i] == labels[i]:
-            counter += 1
-
-    return counter / len(predictions)
+    return extended_images, extended_labels
 
 
 def main():
     images, labels = load_images()
     im_train, im_test, label_train, label_test = split_data(images, labels)
-
-    test_image = np.array([im_test[1]])
-
-    # show_image = test_image[0].reshape(20, 20)
-    #
-    # fig, (ax1) = plt.subplots(nrows=1, ncols=1, figsize=(20, 20), sharex=True, sharey=True)
-    #
-    # ax1.imshow(show_image, cmap=plt.cm.gray)
-    #
-    # fig.tight_layout()
-    # plt.show()
-    #
-    # print(LETTERS[int(label_test[1])])
+    # im_train, label_train = rotate_pictures(im_train, label_train)
 
     predictions = svc_model(im_train, label_train, im_test)
+    #accuracy = build_dense_model(im_train, labels_train, im_test, label_test)
 
-    accuracy = find_accuracy(predictions, label_test)
-
-    print(accuracy)
+    print("Accuracy: ", accuracy_score(label_test, predictions))
 
 
 main()
 
 
+# test_image = np.array([im_test[1]])
+
+# show_image = test_image[0].reshape(20, 20)
+#
+# fig, (ax1) = plt.subplots(nrows=1, ncols=1, figsize=(20, 20), sharex=True, sharey=True)
+#
+# ax1.imshow(show_image, cmap=plt.cm.gray)
+#
+# fig.tight_layout()
+# plt.show()
+#
+# print(LETTERS[int(label_test[1])])
 
 
 
