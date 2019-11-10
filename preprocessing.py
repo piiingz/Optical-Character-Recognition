@@ -6,6 +6,9 @@ import numpy as np
 from PIL import Image
 from models.SVM import svc_model
 from sklearn.metrics import accuracy_score
+from skimage.transform import rotate
+import random
+
 
 BASE_PATH = "dataset/chars74k-lite/"
 LETTERS = [i for i in string.ascii_lowercase]
@@ -54,9 +57,10 @@ def rotate_pictures(images, labels):
     extended_labels[:labels.shape[0]] = labels
 
     for i in range(3):
+        degree = random.randint(-25, 25)
         extended_labels[labels.shape[0]*(i+1):labels.shape[0]*(i+2)] = labels
         for j in range(len(images)):
-            extended_images[images.shape[0]*(1+i) + j] = np.rot90(images[j])
+            extended_images[images.shape[0]*(1+i) + j] = rotate(images[j], degree)
 
     return extended_images, extended_labels
 
