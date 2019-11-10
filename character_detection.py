@@ -21,4 +21,20 @@ def load_detection_images():
     return img1, img2
 
 
-load_detection_images()
+def is_character(imgarray):
+    """
+    Returns True if sliding window has more than 50% False values
+    """
+    array_size = imgarray.shape
+    truthy_values = np.sum(imgarray)
+    falsy_values = array_size-truthy_values
+    return falsy_values/array_size > 0.5
+
+
+def sliding_window(image):
+    h = 20
+    w = 20
+    for i in range(len(image[1, :])):
+        for j in range(len(image[:, 1])):
+
+            # load_detection_images()

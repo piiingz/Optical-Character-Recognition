@@ -24,7 +24,8 @@ def pre_processing(path):
 
 
 def split_data(images, labels):
-    X_train, X_test, y_train, y_test = train_test_split(images, labels, test_size=0.20, random_state=23)
+    X_train, X_test, y_train, y_test = train_test_split(
+        images, labels, test_size=0.20, random_state=23)
     return X_train, X_test, y_train, y_test
 
 
@@ -50,7 +51,8 @@ def load_images():
 
 
 def rotate_pictures(images, labels):
-    extended_images = np.zeros([4*images.shape[0], images.shape[1], images.shape[2]])
+    extended_images = np.zeros(
+        [4*images.shape[0], images.shape[1], images.shape[2]])
     extended_images[:images.shape[0]] = images
 
     extended_labels = np.zeros([4*labels.shape[0]])
@@ -91,7 +93,6 @@ def main():
 # plt.show()
 #
 # print(LETTERS[int(label_test[1])])
-
 
 
 #
