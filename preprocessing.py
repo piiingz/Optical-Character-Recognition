@@ -10,7 +10,7 @@ from skimage.transform import rotate
 import random
 
 
-BASE_PATH = "dataset/chars74k-lite/"
+CHAR_PATH = "dataset/chars74k-lite/"
 LETTERS = [i for i in string.ascii_lowercase]
 
 
@@ -29,7 +29,7 @@ def split_data(images, labels):
 
 
 def load_images():
-    total_files = len(glob(BASE_PATH + "**/*.jpg"))
+    total_files = len(glob(CHAR_PATH + "**/*.jpg"))
     images = np.zeros([total_files, 20, 20])
     labels = np.zeros(total_files)
 
@@ -37,7 +37,7 @@ def load_images():
 
     for i in range(len(LETTERS)):
         print(LETTERS[i])
-        paths = glob(BASE_PATH + LETTERS[i] + "/*.jpg")
+        paths = glob(CHAR_PATH + LETTERS[i] + "/*.jpg")
         for path in paths:
 
             image_pp = pre_processing(path)
@@ -68,7 +68,7 @@ def rotate_pictures(images, labels):
 def main():
     images, labels = load_images()
     im_train, im_test, label_train, label_test = split_data(images, labels)
-    # im_train, label_train = rotate_pictures(im_train, label_train)
+    im_train, label_train = rotate_pictures(im_train, label_train)
 
     predictions = svc_model(im_train, label_train, im_test)
     #accuracy = build_dense_model(im_train, labels_train, im_test, label_test)
@@ -76,7 +76,7 @@ def main():
     print("Accuracy: ", accuracy_score(label_test, predictions))
 
 
-main()
+# main()
 
 
 # test_image = np.array([im_test[1]])
