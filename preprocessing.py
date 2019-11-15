@@ -8,7 +8,7 @@ from models.SVM import svc_model
 from sklearn.metrics import accuracy_score
 from skimage.transform import rotate
 import random
-from models.CNN import build_CNN_model, loadModel
+from models.CNN import build_CNN_model, loadModel, cnnPredict
 from keras.utils import to_categorical
 
 import matplotlib.pyplot as plt
@@ -90,20 +90,46 @@ def SaveAndLoggCNN(model):
     model.save("./models/cnn_trained_model.h5")
 
 
+def cnnPreprocess(im_train, im_test, label_train, label_test):
+    # Set labels to correct output dim
+    cnn_labels_train = to_categorical(label_train, 26)
+    cnn_labels_test = to_categorical(label_test, 26)
+
+    # Keras.fit expects 4D array
+    cnn_im_train = np.expand_dims(im_train, axis=-1)
+    cnn_im_test = np.expand_dims(im_test, axis=-1)
+
+    return cnn_im_train, cnn_im_test, cnn_labels_train, cnn_labels_test
+
+
 def main():
     images, labels = load_images()
     im_train, im_test, label_train, label_test = split_data(images, labels)
     # im_train, label_train = rotate_pictures(im_train, label_train)
 
     # predictions = svc_model(im_train, label_train, im_test)
-    """cnn_accuracy, cnn_model = build_CNN_model(
-        im_train, label_train, im_test, label_test)
-
     #print("Accuracy: ", accuracy_score(label_test, predictions))
+
+    # CNN preprocess
+    cnn_im_train, cnn_im_test, cnn_label_train, cnn_label_test = cnnPreprocess(
+        im_train, im_test, label_train, label_test)
+
+    # CNN train model
+    cnn_accuracy, cnn_model = build_CNN_model(
+        cnn_im_train, cnn_label_train, cnn_im_test, cnn_label_test)
+
     print("Accuracy: ", cnn_accuracy)
 
-    SaveAndLoggCNN(cnn_model)"""
-    loadModel("./models/cnn_trained_model.h5", im_test, label_test)
+    # Save model and logg history
+    SaveAndLoggCNN(cnn_model)
+
+    # Load Model
+    loaded_model = loadModel(
+        "./models/cnn_trained_model.h5", cnn_im_test, cnn_label_test)
+
+    cnn_im_test = np.expand_dims(im_test, axis=-1)
+
+    cnnPredict(loaded_model, cnn_im_test, label_test, LETTERS)
 
 
 # main()
