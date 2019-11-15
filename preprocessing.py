@@ -106,7 +106,7 @@ def main():
     loadModel("./models/cnn_trained_model.h5", im_test, label_test)
 
 
-main()
+# main()
 
 
 # test_image = np.array([im_test[1]])
