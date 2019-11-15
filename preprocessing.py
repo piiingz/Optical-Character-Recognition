@@ -8,7 +8,7 @@ from models.SVM import svc_model
 from sklearn.metrics import accuracy_score
 from skimage.transform import rotate
 import random
-from models.CNN import build_CNN_model
+from models.CNN import build_CNN_model, loadModel
 from keras.utils import to_categorical
 
 import matplotlib.pyplot as plt
@@ -96,13 +96,14 @@ def main():
     # im_train, label_train = rotate_pictures(im_train, label_train)
 
     # predictions = svc_model(im_train, label_train, im_test)
-    cnn_accuracy, cnn_model = build_CNN_model(
+    """cnn_accuracy, cnn_model = build_CNN_model(
         im_train, label_train, im_test, label_test)
 
-    # print("Accuracy: ", accuracy_score(label_test, predictions))
+    #print("Accuracy: ", accuracy_score(label_test, predictions))
     print("Accuracy: ", cnn_accuracy)
 
-    SaveAndLoggCNN(cnn_model)
+    SaveAndLoggCNN(cnn_model)"""
+    loadModel("./models/cnn_trained_model.h5", im_test, label_test)
 
 
 main()

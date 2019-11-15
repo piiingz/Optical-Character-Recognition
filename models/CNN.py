@@ -2,7 +2,7 @@ from keras import Model
 from keras.utils import to_categorical
 from keras.optimizers import Adam
 from keras.layers import Dense, Input, Conv2D, Flatten, MaxPooling2D, Dropout, BatchNormalization, Activation
-from keras.models import Sequential
+from keras.models import Sequential, load_model
 from keras.regularizers import l2
 import os
 import numpy as np
@@ -120,3 +120,19 @@ def build_CNN_model(images_train, labels_train, images_test, labels_test):
     model_result = model.evaluate(new_images_test, labels_test)
 
     return model_result, model
+
+
+def loadModel(modelPath, images_test, labels_test):
+    images_test = np.expand_dims(images_test, axis=-1)
+    labels_test = to_categorical(labels_test, 26)
+
+    model = load_model(modelPath)
+
+    # Test the loaded model
+    print(model.evaluate(images_test, labels_test))
+    return model
+
+
+def cnnPredict(model, image):
+    predictions = model.predict(image)
+    print(predictions)
