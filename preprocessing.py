@@ -8,7 +8,10 @@ from models.SVM import svc_model
 from sklearn.metrics import accuracy_score
 from skimage.transform import rotate
 import random
+from models.CNN import build_CNN_model
+from keras.utils import to_categorical
 
+import matplotlib.pyplot as plt
 
 CHAR_PATH = "dataset/chars74k-lite/"
 LETTERS = [i for i in string.ascii_lowercase]
@@ -17,7 +20,7 @@ LETTERS = [i for i in string.ascii_lowercase]
 def pre_processing(path):
     image = Image.open(path)
     data = np.asarray(image)/255
-    data = otsu_filter(data)
+    # data = otsu_filter(data)
 
     # data = data.reshape(1, 400)
     return data
@@ -62,23 +65,47 @@ def rotate_pictures(images, labels):
         degree = random.randint(-25, 25)
         extended_labels[labels.shape[0]*(i+1):labels.shape[0]*(i+2)] = labels
         for j in range(len(images)):
-            extended_images[images.shape[0]*(1+i) + j] = rotate(images[j], degree)
+            extended_images[images.shape[0] *
+                            (1+i) + j] = rotate(images[j], degree)
 
     return extended_images, extended_labels
+
+
+def SaveAndLoggCNN(model):
+    history = model.history.history
+    print("\nKEYS: ", history.keys())
+    # Loss plot
+    plt.figure(figsize=(12, 8))
+    plt.plot(history["loss"], label="Training loss")
+    plt.legend()
+    plt.show()
+
+    # Accuracy plot
+    plt.figure(figsize=(12, 8))
+    plt.plot(history["accuracy"], label="Training accuracy")
+    plt.legend()
+    plt.show()
+
+    # Save model
+    model.save("./models/cnn_trained_model.h5")
 
 
 def main():
     images, labels = load_images()
     im_train, im_test, label_train, label_test = split_data(images, labels)
-    im_train, label_train = rotate_pictures(im_train, label_train)
+    # im_train, label_train = rotate_pictures(im_train, label_train)
 
-    predictions = svc_model(im_train, label_train, im_test)
-    #accuracy = build_dense_model(im_train, labels_train, im_test, label_test)
+    # predictions = svc_model(im_train, label_train, im_test)
+    cnn_accuracy, cnn_model = build_CNN_model(
+        im_train, label_train, im_test, label_test)
 
-    print("Accuracy: ", accuracy_score(label_test, predictions))
+    # print("Accuracy: ", accuracy_score(label_test, predictions))
+    print("Accuracy: ", cnn_accuracy)
+
+    SaveAndLoggCNN(cnn_model)
 
 
-# main()
+main()
 
 
 # test_image = np.array([im_test[1]])

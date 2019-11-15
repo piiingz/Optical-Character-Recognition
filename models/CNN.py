@@ -5,6 +5,7 @@ from keras.layers import Dense, Input, Conv2D, Flatten, MaxPooling2D, Dropout, B
 from keras.models import Sequential
 from keras.regularizers import l2
 import os
+import numpy as np
 
 os.environ['KMP_DUPLICATE_LIB_OK'] = 'True'
 
@@ -38,18 +39,31 @@ def build_dense_model2(images_train, labels_train, images_test, labels_test):
 
 def build_CNN_model(images_train, labels_train, images_test, labels_test):
     # Function Parameter parsing
-    #images_train = images_train.reshape([images_train.shape[0], 400])
-    #images_test = images_test.reshape([images_test.shape[0], 400])
+    # images_train = images_train.reshape([images_train.shape[0], 400])
+    # images_test = images_test.reshape([images_test.shape[0], 400])
     labels_train = to_categorical(labels_train, 26)
     labels_test = to_categorical(labels_test, 26)
 
+    new_images_train = np.expand_dims(images_train, axis=-1)
+    new_images_test = np.expand_dims(images_test, axis=-1)
+
+    print("\nLabels train: ", labels_train.shape)
+    print(labels_train)
+    print("\nLabels test: ", labels_test.shape)
+    print(labels_test)
+    print("\nImages train: ", images_train.shape)
+    print("\nImages test: ", images_test.shape)
+    print("\nLen(Images_train): ", len(images_train))
+    print("\nNew images train: ", new_images_train.shape, "\n")
+    print("\nLen(new_images_train): ", len(new_images_train), "\n")
+
     # Hyperparameters
     weight_decay = 0.005
-    dropout = 0.35
+    dropout = 0.30
     epoch_number = 50
     batch_size = 64
 
-    input_dimension = (20, 20, 3)
+    input_dimension = (20, 20, 1)
     output_dimension = 26
 
     # CNN
@@ -82,6 +96,9 @@ def build_CNN_model(images_train, labels_train, images_test, labels_test):
     model.add(MaxPooling2D(pool_size=(2, 2), strides=(2, 2)))
 
     # Dense output
+    # Flatten to get proper dimensions for output
+    model.add(Flatten())
+
     model.add(Dense(2048, kernel_regularizer=l2(weight_decay)))
     model.add(BatchNormalization())
     model.add(Activation('relu'))
@@ -96,10 +113,10 @@ def build_CNN_model(images_train, labels_train, images_test, labels_test):
     model.summary()
 
     # Train model
-    model.fit(images_train, labels_train,
+    model.fit(new_images_train, labels_train,
               epochs=epoch_number, batch_size=batch_size, verbose=2)
 
     # Test model
-    model_result = model.evaluate(images_test, labels_test)
+    model_result = model.evaluate(new_images_test, labels_test)
 
-    return model_result
+    return model_result, model
