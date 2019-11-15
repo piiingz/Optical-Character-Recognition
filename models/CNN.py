@@ -103,11 +103,8 @@ def build_CNN_model(images_train, labels_train, images_test, labels_test):
     return model_result, model
 
 
-def loadModel(modelPath, images_test, labels_test):
+def loadModel(modelPath):
     model = load_model(modelPath)
-
-    # Test the loaded model
-    print(model.evaluate(images_test, labels_test))
     return model
 
 
