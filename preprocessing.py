@@ -8,7 +8,7 @@ from models.SVM import svc_model
 from sklearn.metrics import accuracy_score
 from skimage.transform import rotate
 import random
-from models.CNN import build_CNN_model, loadModel, cnnPredict
+from models.CNN import build_CNN_model, load_cnn_model, cnn_predict_single_im
 from keras.utils import to_categorical
 
 import matplotlib.pyplot as plt
@@ -71,7 +71,8 @@ def rotate_pictures(images, labels):
     return extended_images, extended_labels
 
 
-def SaveAndLoggCNN(model):
+def save_cnn_plot_history(model, path):
+    print("\nPlotting CNN training history..")
     history = model.history.history
     print("\nKEYS: ", history.keys())
     # Loss plot
@@ -85,12 +86,12 @@ def SaveAndLoggCNN(model):
     plt.plot(history["accuracy"], label="Training accuracy")
     plt.legend()
     plt.show()
-
     # Save model
-    model.save("./models/cnn_trained_model.h5")
+    print("\nSaving model to: ", path)
+    model.save(path)
 
 
-def cnnPreprocess(im_train, im_test, label_train, label_test):
+def cnn_preprocess(im_train, im_test, label_train, label_test):
     # Set labels to correct output dim
     cnn_labels_train = to_categorical(label_train, 26)
     cnn_labels_test = to_categorical(label_test, 26)
@@ -102,76 +103,39 @@ def cnnPreprocess(im_train, im_test, label_train, label_test):
     return cnn_im_train, cnn_im_test, cnn_labels_train, cnn_labels_test
 
 
-def main():
+def run_preprocess_train_test(train_svm, train_cnn):
+    # Load and split dataset
     images, labels = load_images()
     im_train, im_test, label_train, label_test = split_data(images, labels)
-    # im_train, label_train = rotate_pictures(im_train, label_train)
 
-    # predictions = svc_model(im_train, label_train, im_test)
-    #print("Accuracy: ", accuracy_score(label_test, predictions))
+    # SVM wih rotation for dataset
+    if (train_svm):
+        print("\nTraining and testing SVM\n")
+        im_train_svm, label_train_svm = rotate_pictures(im_train, label_train)
+        predictions = svc_model(im_train_svm, label_train_svm, im_test)
+        print("Accuracy on training set: ",
+              accuracy_score(label_test, predictions))
 
     # CNN preprocess
-    cnn_im_train, cnn_im_test, cnn_label_train, cnn_label_test = cnnPreprocess(
+    cnn_im_train, cnn_im_test, cnn_label_train, cnn_label_test = cnn_preprocess(
         im_train, im_test, label_train, label_test)
 
-    # CNN train model
-    cnn_accuracy, cnn_model = build_CNN_model(
-        cnn_im_train, cnn_label_train, cnn_im_test, cnn_label_test)
+    if (train_cnn):
+        print("\nTraining the CNN\n")
+        cnn_accuracy, cnn_model = build_CNN_model(
+            cnn_im_train, cnn_label_train, cnn_im_test, cnn_label_test)
+        print("Accuracy: ", cnn_accuracy)
+        # Save model and logg history
+        save_cnn_plot_history(cnn_model, "./models/newly_trained_cnn.h5")
 
-    print("Accuracy: ", cnn_accuracy)
+    print("\nRunning the pretrained CNN\n")
+    # Load our pretrained CNN-Model
+    loaded_model = load_cnn_model(
+        "./models/cnn_trained_model.h5")
 
-    # Save model and logg history
-    SaveAndLoggCNN(cnn_model)
-
-    # Load Model
-    loaded_model = loadModel(
-        "./models/cnn_trained_model.h5", cnn_im_test, cnn_label_test)
-
+    print("\nPredicting one image with the CNN:\n")
     cnn_im_test = np.expand_dims(im_test, axis=-1)
+    cnn_predict_single_im(loaded_model, cnn_im_test, label_test, LETTERS)
 
-    cnnPredict(loaded_model, cnn_im_test, label_test, LETTERS)
-
-
-# main()
-
-
-# test_image = np.array([im_test[1]])
-
-# show_image = test_image[0].reshape(20, 20)
-#
-# fig, (ax1) = plt.subplots(nrows=1, ncols=1, figsize=(20, 20), sharex=True, sharey=True)
-#
-# ax1.imshow(show_image, cmap=plt.cm.gray)
-#
-# fig.tight_layout()
-# plt.show()
-#
-# print(LETTERS[int(label_test[1])])
-
-
-#
-# image = Image.open(image_path)
-# image.show()
-#
-# data = np.asarray(image)/255
-# print(data)
-#
-# edges = feature.canny(data, sigma=1)
-# print(edges)
-#
-# # display results
-# fig, (ax1, ax2) = plt.subplots(nrows=1, ncols=2, figsize=(20, 20),
-#                                     sharex=True, sharey=True)
-#
-# ax1.imshow(data, cmap=plt.cm.gray)
-# ax1.axis('off')
-# ax1.set_title('noisy image', fontsize=20)
-#
-# ax2.imshow(edges, cmap=plt.cm.gray)
-# ax2.axis('off')
-# ax2.set_title('Canny filter, $\sigma=1$', fontsize=20)
-#
-# print(ax2)
-# fig.tight_layout()
-#
-# plt.show()
+    print("\nCNN accuracy on traning set: \n")
+    print(loaded_model.evaluate(cnn_im_test, cnn_label_test))

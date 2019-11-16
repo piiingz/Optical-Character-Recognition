@@ -2,7 +2,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from glob import glob
 from preprocessing import pre_processing
-from models.CNN import loadModel
+from models.CNN import load_cnn_model
 from PIL import Image, ImageDraw
 
 
@@ -112,20 +112,16 @@ def draw_ocr(imagepath, result_dict, h, w):
     image.show()
 
 
-def main():
+def run_character_detection():
     test_img, pred_img = load_detection_images()
 
     step = 5
     h = 20  # height of sliding window
     w = 20  # width of sliding window
-    model = loadModel('./models/cnn_trained_model.h5')
+    model = load_cnn_model('./models/cnn_trained_model.h5')
 
     test_result = sliding_window(test_img, {}, step, h, w, model)
     result = sliding_window(pred_img, {}, step, h, w, model)
 
     draw_ocr(DETECTION_PATH + 'detection-1.jpg', test_result, h, w)
     draw_ocr(DETECTION_PATH + 'detection-2.jpg', result, h, w)
-
-
-if __name__ == "__main__":
-    main()
