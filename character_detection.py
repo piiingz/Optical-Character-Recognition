@@ -1,9 +1,9 @@
 import numpy as np
 import matplotlib.pyplot as plt
 from glob import glob
-from preprocessing import pre_processing
+from preprocessing import pre_processing, LETTERS
 from models.CNN import load_cnn_model
-from PIL import Image, ImageDraw
+from PIL import Image, ImageDraw, ImageFont
 
 
 DETECTION_PATH = "dataset/detection-images/"
@@ -68,7 +68,7 @@ def pick_classifiaction(x0, y0, prediction, dic, h, w):
     return dic
 
 
-def sliding_window(image, dictionary, step, h, w, model):
+def sliding_window(image, dictionary, step, h, w, model, threshold):
     """
     Sliding window that checks if an image contains a charater and predicts
     which letter it is
@@ -76,7 +76,7 @@ def sliding_window(image, dictionary, step, h, w, model):
     for y in range(0, len(image[:, 1])-w+1, step):
         for x in range(0, len(image[1, :])-h+1, step):
             window = image[y:y+w, x:x+h]
-            if is_character(window, 0.8):
+            if is_character(window, threshold):
                 window = window.reshape((1,) + window.shape + (1,))
                 prediction = model.predict(window)[0]
                 dictionary = pick_classifiaction(
@@ -99,15 +99,20 @@ def draw_ocr(imagepath, result_dict, h, w):
     """
     Draw bounding box for letters recognized in an image
     """
+
     image = Image.open(imagepath).convert('RGB')
+    font = ImageFont.truetype("arial.ttf", 12)
     draw = ImageDraw.Draw(image)
     for key in result_dict:
         x, y = result_dict[key][0]
+        prediction = result_dict[key][1]
+        letter_index = np.argmax(prediction)
         magenta = '#FF00FF'
         draw.line((x, y) + (x+h, y), fill=magenta)
         draw.line((x, y) + (x, y+w), fill=magenta)
         draw.line((x+h, y) + (x+h, y+w), fill=magenta)
         draw.line((x, y+w) + (x+h, y+w), fill=magenta)
+        draw.text((x+5, y-15), LETTERS[letter_index], font=font, fill="black")
     del draw
     image.show()
 
@@ -115,13 +120,18 @@ def draw_ocr(imagepath, result_dict, h, w):
 def run_character_detection():
     test_img, pred_img = load_detection_images()
 
-    step = 5
+    step = 1
     h = 20  # height of sliding window
     w = 20  # width of sliding window
+    threshold = 0.85
     model = load_cnn_model('./models/cnn_trained_model.h5')
 
-    test_result = sliding_window(test_img, {}, step, h, w, model)
-    result = sliding_window(pred_img, {}, step, h, w, model)
+    test_result = sliding_window(test_img, {}, step, h, w, model, threshold)
+    result = sliding_window(pred_img, {}, step, h, w, model, threshold)
 
     draw_ocr(DETECTION_PATH + 'detection-1.jpg', test_result, h, w)
     draw_ocr(DETECTION_PATH + 'detection-2.jpg', result, h, w)
+
+
+if __name__ == '__main__':
+    run_character_detection()
